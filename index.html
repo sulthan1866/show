@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>File Upload</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      input[type="file"],
+      input[type="password"] {
+        margin: 10px 0;
+        display: block;
+      }
+      button {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      #file-list {
+        margin-top: 20px;
+      }
+      .file-item {
+        margin: 5px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>File Upload</h1>
+
+    <!-- File Upload Form -->
+    <form id="uploadForm">
+      <input type="file" id="fileInput" required />
+      <input
+        type="password"
+        id="passwordInput"
+        placeholder="Enter password"
+        required
+      />
+      <button type="submit">Upload File</button>
+    </form>
+
+    <!-- File List -->
+    <h2>Uploaded Files</h2>
+    <div id="file-list"></div>
+
+    <script>
+      let correctPassword;
+      let api;
+
+      fetch("/.netlify/functions/getPassword")
+        .then((response) => response.json())
+        .then(({ password }) => {
+          correctPassword = password;
+        })
+        .catch((error) => {
+          console.error("Error fetching password:", error);
+        });
+      fetch("/.netlify/functions/getApi")
+        .then((response) => response.json())
+        .then(({ apiLink }) => {
+          api = apiLink;
+        })
+        .catch((error) => {
+          console.error("Error fetching password:", error);
+        });
+      document
+        .getElementById("uploadForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          const passwordInput = document.getElementById("passwordInput").value;
+
+          if (passwordInput != correctPassword) {
+            alert("Incorrect password!");
+            return;
+          }
+
+          const fileInput = document.getElementById("fileInput");
+          const file = fileInput.files[0];
+
+          if (file) {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            fetch(`${api}/documents/upload`, {
+              method: "POST",
+              body: formData,
+            })
+              .then((response) => response.text())
+              .then((result) => {
+                alert("File added successfully");
+                loadFileList();
+                document.getElementById("uploadForm").reset(); // Reset form after upload
+              })
+              .catch((error) => {
+                alert("File upload failed!");
+                console.error("Error:", error);
+              });
+          }
+        });
+
+      // Fetch and display file list
+      function loadFileList() {
+        fetch(`${api}/documents`)
+          .then((response) => response.json())
+          .then((data) => {
+            const fileList = document.getElementById("file-list");
+            fileList.innerHTML = "";
+
+            data.forEach((file) => {
+              const fileItem = document.createElement("div");
+              fileItem.className = "file-item";
+              fileItem.innerHTML = `
+          <strong>${file.name}</strong>
+          <button onclick="downloadFile(${file.id})">Download</button>
+          <button onclick="deleteFile(${file.id})" style="color: red;">Delete</button>
+        `;
+              fileList.appendChild(fileItem);
+            });
+          })
+          .catch((error) => {
+            console.error("Error fetching file list:", error);
+          });
+      }
+
+      // Delete file
+      function deleteFile(fileId) {
+        const password = prompt("Enter password to delete this file:");
+
+        if (password == correctPassword) {
+          if (confirm("Are you sure you want to delete this file?")) {
+            fetch(`${api}/documents/${fileId}`, {
+              method: "DELETE",
+            })
+              .then((response) => {
+                if (response.ok) {
+                  alert("File deleted successfully.");
+                  loadFileList(); // Refresh file list
+                } else {
+                  alert("Error deleting file.");
+                }
+              })
+              .catch((error) => {
+                console.error("Error deleting file:", error);
+              });
+          }
+        } else {
+          alert("Incorrect password. Deletion cancelled.");
+        }
+      }
+
+      // Download file
+      function downloadFile(fileId) {
+        fetch(`${api}/documents/${fileId}`)
+          .then((response) => response.json())
+          .then((doc) => {
+            // Renamed to 'doc' to avoid conflict
+            const { name, data } = doc;
+            const byteCharacters = atob(data);
+            const byteNumbers = new Array(byteCharacters.length)
+              .fill()
+              .map((_, i) => byteCharacters.charCodeAt(i));
+            const byteArray = new Uint8Array(byteNumbers);
+
+            const blob = new Blob([byteArray], {
+              type: "application/octet-stream",
+            });
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement("a"); // Now uses the global 'document'
+            a.href = url;
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+
+            window.URL.revokeObjectURL(url);
+          })
+          .catch((error) => {
+            console.error("Error downloading file:", error);
+          });
+      }
+
+      // Load file list on page load
+      loadFileList();
+    </script>
+  </body>
+</html>
