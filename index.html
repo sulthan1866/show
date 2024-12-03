@@ -56,23 +56,25 @@
       let apiLink;
 
       fetch("/.netlify/functions/getPassword")
-        .then((response) => response.json())
-        .then((data) => {
-          correctPassword = data.password;
-        })
-        .catch((error) => {
-          console.error("Error fetching password:", error);
-        });
-      fetch("/.netlify/functions/getApi")
-        .then((response) => response.json())
-        .then((data) => {
-          apiLink = data.api;
-        })
-        .catch((error) => {
-          console.error("Error fetching password:", error);
-        });
-      console.log(apiLink);
-      console.log(correctPassword);
+  .then((response) => response.json())
+  .then((data) => {
+    correctPassword = data.password;
+    console.log("Fetched Password:", correctPassword); // Log immediately
+  })
+  .catch((error) => {
+    console.error("Error fetching password:", error);
+  });
+
+fetch("/.netlify/functions/getApi")
+  .then((response) => response.json())
+  .then((data) => {
+    apiLink = data.api;
+    console.log("Fetched API Link:", apiLink); // Log immediately
+  })
+  .catch((error) => {
+    console.error("Error fetching API link:", error);
+  });
+
       document
         .getElementById("uploadForm")
         .addEventListener("submit", function (event) {
