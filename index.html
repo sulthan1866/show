@@ -60,12 +60,10 @@ async function fetchData() {
     const passwordResponse = await fetch("/.netlify/functions/getPassword");
     const passwordData = await passwordResponse.json();
     correctPassword = passwordData.password;
-    console.log("Password:", correctPassword);
 
     const apiResponse = await fetch("/.netlify/functions/getApi");
     const apiData = await apiResponse.json();
     apiLink = apiData.api;
-    console.log("API Link:", apiLink);
 
     loadFileList(); // Call here after variables are set
   } catch (error) {
