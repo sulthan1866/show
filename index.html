@@ -160,7 +160,7 @@ fetchData();
 
       // Download file
       function downloadFile(fileId) {
-        fetch(`${api}/documents/${fileId}`)
+        fetch(`${apiLink}/documents/${fileId}`)
           .then((response) => response.json())
           .then((doc) => {
             // Renamed to 'doc' to avoid conflict
