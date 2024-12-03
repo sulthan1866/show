@@ -55,26 +55,25 @@
       let correctPassword;
       let apiLink;
 
-      fetch("/.netlify/functions/getPassword")
-  .then((response) => response.json())
-  .then((data) => {
-    correctPassword = data.password;
-    console.log("Fetched Password:", correctPassword); // Log immediately
-  })
-  .catch((error) => {
-    console.error("Error fetching password:", error);
-  });
+async function fetchData() {
+  try {
+    const passwordResponse = await fetch("/.netlify/functions/getPassword");
+    const passwordData = await passwordResponse.json();
+    correctPassword = passwordData.password;
+    console.log("Password:", correctPassword);
 
-fetch("/.netlify/functions/getApi")
-  .then((response) => response.json())
-  .then((data) => {
-    apiLink = data.api;
-    console.log("Fetched API Link:", apiLink); // Log immediately
-  })
-  .catch((error) => {
-    console.error("Error fetching API link:", error);
-  });
+    const apiResponse = await fetch("/.netlify/functions/getApi");
+    const apiData = await apiResponse.json();
+    apiLink = apiData.api;
+    console.log("API Link:", apiLink);
 
+    loadFileList(); // Call here after variables are set
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  }
+}
+
+fetchData();
       document
         .getElementById("uploadForm")
         .addEventListener("submit", function (event) {
@@ -194,7 +193,6 @@ fetch("/.netlify/functions/getApi")
       }
 
       // Load file list on page load
-      loadFileList();
     </script>
   </body>
 </html>
